@@ -1,3 +1,5 @@
+Forked version of npm 'iptables' package with the ability to specify a table when listing rules.
+
 This is a node.js module for controlling iptables. It's very basic just for
 what we need at http://browserling.com.
 
