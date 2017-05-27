@@ -3,26 +3,33 @@ var lazy = require('lazy');
 
 exports.allow = function (rule) {
     rule.target = 'ACCEPT';
-    if (!rule.action) rule.action = '-A';
+    if (!rule.action) { rule.action = '-A'; }
     newRule(rule);
 }
 
 exports.drop = function (rule) {
     rule.target = 'DROP';
-    if (!rule.action) rule.action = '-A';
+    if (!rule.action) { rule.action = '-A'; }
     newRule(rule);
 }
 
 exports.reject = function (rule) {
     rule.target = 'REJECT';
-    if (!rule.action) rule.action = '-A';
+    if (!rule.action) { rule.action = '-A'; }
     newRule(rule);
 }
 
-exports.list = function(chain, cb) {
+exports.list = function(table, chain, cb) {
+		// Accepts optional table argument
+		if(!cb) {
+			cb = chain;
+			chain = table;
+			table = undefined;
+		}
     var rule = {
         list : true,
         chain : chain,
+				table : table,
         action : '-L',
         sudo : true
     };
@@ -76,18 +83,20 @@ function iptables (rule) {
 function iptablesArgs (rule) {
     var args = [];
 
-    if (!rule.chain) rule.chain = 'INPUT';
+		if (!rule.table) { rule.table = 'filter'; }
+    if (!rule.chain) { rule.chain = 'INPUT'; }
 
-    if (rule.chain) args = args.concat([rule.action, rule.chain]);
-    if (rule.protocol) args = args.concat(["-p", rule.protocol]);
-    if (rule.src) args = args.concat(["--src", rule.src]);
-    if (rule.dst) args = args.concat(["--dst", rule.dst]);
-    if (rule.sport) args = args.concat(["--sport", rule.sport]);
-    if (rule.dport) args = args.concat(["--dport", rule.dport]);
-    if (rule.in) args = args.concat(["-i", rule.in]);
-    if (rule.out) args = args.concat(["-o", rule.out]);
-    if (rule.target) args = args.concat(["-j", rule.target]);
-    if (rule.list) args = args.concat(["-n", "-v"]);
+    if (rule.table) { args = args.concat(['-t', rule.table, rule.action]); }
+    if (rule.chain) { args = args.concat([rule.chain]); }
+    if (rule.protocol) { args = args.concat(["-p", rule.protocol]); }
+    if (rule.src) { args = args.concat(["--src", rule.src]); }
+    if (rule.dst) { args = args.concat(["--dst", rule.dst]); }
+    if (rule.sport) { args = args.concat(["--sport", rule.sport]); }
+    if (rule.dport) { args = args.concat(["--dport", rule.dport]); }
+    if (rule.in) { args = args.concat(["-i", rule.in]); }
+    if (rule.out) { args = args.concat(["-o", rule.out]); }
+    if (rule.target) { args = args.concat(["-j", rule.target]); }
+    if (rule.list) { args = args.concat(["-n", "-v"]); }
 
     return args;
 }
