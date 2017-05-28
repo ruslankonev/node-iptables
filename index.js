@@ -20,16 +20,16 @@ exports.reject = function (rule) {
 }
 
 exports.list = function(table, chain, cb) {
-		// Accepts optional table argument
-		if(!cb) {
-			cb = chain;
-			chain = table;
-			table = undefined;
-		}
+    // Accepts optional table argument
+    if(!cb) {
+        cb = chain;
+        chain = table;
+        table = undefined;
+    }
     var rule = {
         list : true,
         chain : chain,
-				table : table,
+                table : table,
         action : '-L',
         sudo : true
     };
@@ -73,6 +73,8 @@ function iptables (rule) {
         args = ['iptables'].concat(args);
     }
 
+    console.log('Running command', cmd, args.join(' '));
+
     var proc = spawn(cmd, args);
     proc.stderr.on('data', function (buf) {
         console.error(buf.toString());
@@ -83,26 +85,34 @@ function iptables (rule) {
 function iptablesArgs (rule) {
     var args = [];
 
-		if (!rule.table) { rule.table = 'filter'; }
+    if (!rule.table) { rule.table = 'filter'; }
     if (!rule.chain) { rule.chain = 'INPUT'; }
 
-    if (rule.table) { args = args.concat(['-t', rule.table, rule.action]); }
+    if (rule.table) { args = args.concat(['-t', rule.table]); }
+    if (rule.action) { args.push(rule.action); }
+    if (rule.policy) { args.push('--policy'); }
     if (rule.chain) { args = args.concat([rule.chain]); }
-    if (rule.protocol) { args = args.concat(["-p", rule.protocol]); }
-    if (rule.src) { args = args.concat(["--src", rule.src]); }
-    if (rule.dst) { args = args.concat(["--dst", rule.dst]); }
-    if (rule.sport) { args = args.concat(["--sport", rule.sport]); }
-    if (rule.dport) { args = args.concat(["--dport", rule.dport]); }
-    if (rule.in) { args = args.concat(["-i", rule.in]); }
-    if (rule.out) { args = args.concat(["-o", rule.out]); }
-    if (rule.target) { args = args.concat(["-j", rule.target]); }
-    if (rule.list) { args = args.concat(["-n", "-v"]); }
+    if (rule.policy) { args.push(rule.policy); }
+    if (rule.protocol) { args = args.concat(['-p', rule.protocol]); }
+    if (rule.src) { args = args.concat(['--src', rule.src]); }
+    if (rule.dst) { args = args.concat(['--dst', rule.dst]); }
+    if (rule.sport) { args = args.concat(['--sport', rule.sport]); }
+    if (rule.dport) { args = args.concat(['--dport', rule.dport]); }
+    if (rule.in) { args = args.concat(['-i', rule.in]); }
+    if (rule.out) { args = args.concat(['-o', rule.out]); }
+    if (rule.state) { args = args.concat(['-m', 'state', '--state', rule.state]); }
+    if (rule.target) { args = args.concat(['-j', rule.target]); }
+    if (rule.list) { args = args.concat(['-n', '-v']); }
+    if (rule.to) { args = args.concat(['--to', rule.to]); }
 
     return args;
 }
 
 function newRule (rule) {
-    iptables(rule);
+    return new Promise(function(resolve) {
+        var proc = iptables(rule);
+        proc.on('close', resolve);
+    });
 }
 
 function deleteRule (rule) {
